@@ -1,0 +1,51 @@
+@startuml
+title SmartHome API & Services.Part 2. VideoService. Component Diagram
+
+top to bottom direction
+
+!includeurl ../C4_Component.puml
+
+System_Boundary(SmartHomeSystem, "SmartHome System") {
+    SystemDb_Ext(s3, "S3", "Внешнее хранилище данных")
+    Container(API_Gateway, "API Gateway", "nginx", "")
+    System_Ext(ipCameras, "IP Cameras", "Камеры видеонаблюдения")
+
+
+    Boundary(clientApps, "Client apps") {
+        Container(MobileApp, "Mobile App", "Kotlin, Swift", "контроль и управление\n умным домом")
+    }
+
+   Boundary(services, "API & services") {
+        ContainerDb(MetaDB, "Meta Database", "PostgreSQL", "хранит пользователей, устройства, сценарии, платежи и др.\n(кроме телеметрии)")
+        ContainerDb(UserCache, "User Cache", "Redis", "юзер-кэш метрик, устройств\n и др.данных")
+
+        Container(VideoService, "Video Service", "Java, Spring", "Обработка и стриминг видео") {
+        Component(ApiControllerVideo, "APIController", "Java, Spring", "Обработка API запросов")
+        Component(CodecProcessor, "Codec Processor", "Преобразование кодеков")
+        Component(ArchiveMetadataSearcher, "ArchiveMetadataSearcher", "Java, Spring", "Поиск архивов по времени")
+        Component(VideoArchiver, "VideoArchiver", "Java, Spring", "Сохранение записей")
+        Component(LiveStreamGateway, "LiveStreamGateway", "Java, Spring", "Проксирование входящих видеопотоков")
+        Component(ArchiveSignedChunksAssembler, "ArchiveSignedChunksAssembler", "Java, Spring", "Формирует ссылки для просмотра архивных видео из хранилища")
+
+        Rel(ApiControllerVideo, LiveStreamGateway,"запрос real-time")
+        Rel(ApiControllerVideo, ArchiveMetadataSearcher,"запрос архивов")
+        Rel(LiveStreamGateway, MobileApp,"просмотр в реальном времени ")
+        Rel(LiveStreamGateway, VideoArchiver,"поток на запись")
+        Rel(LiveStreamGateway, CodecProcessor,"конвертация")
+        Rel(VideoArchiver, MetaDB,"saves meta-data")
+        Rel(VideoArchiver, s3,"saves video")
+        Rel(VideoArchiver, UserCache,"saves meta-data")
+
+        Rel(ArchiveMetadataSearcher, UserCache,"поиск")
+        Rel(ArchiveMetadataSearcher, MetaDB,"поиск")
+        Rel(ArchiveMetadataSearcher, ArchiveSignedChunksAssembler,"поиск")
+        Rel(ArchiveSignedChunksAssembler, s3,"реальные ссылки")
+        Rel(ArchiveSignedChunksAssembler, ApiControllerVideo,"ссылки\nдля просмотра")
+        Rel(ipCameras, "LiveStreamGateway","видео поток")
+    }
+
+    'от API Gateway
+    Rel(API_Gateway, "ApiControllerVideo","поиск видео")
+}
+
+@enduml
