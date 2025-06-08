@@ -1,0 +1,102 @@
+@startuml
+title SmartHome CommandRegister Code Diagram
+
+top to bottom direction
+'
+'<style>
+'rectangle.dashedBorder {
+'  LineStyle Dashed
+'  LineColor Black
+'  BackgroundColor White
+'}
+'</style>
+
+!includeurl ../C4_Code.puml
+
+
+!includeurl ../C4_Code.puml
+
+rectangle {
+    interface CommandRegister{
+        + Command register(CommandIntent intent)
+    }
+
+    class CommandRegisterImpl{
+        + SubscriptionChecker subChecker
+        + CommandRepo repo
+        + Command register(CommandIntent intent)
+    }
+}
+'-----------------
+rectangle {
+    interface CommandAssign <<external>> #878787{
+        + Command assign (Command cmd)
+    }
+
+    class CommandAssignImpl <<external>> #878787{
+        + CommandRepo repo
+        + Command assign (Command cmd)
+    }
+}
+
+'-----------------
+class SubscriptionChecker <<external>> #878787 {
+    + boolean hasSubFor(CommandIntent intent)
+}
+
+class CommandRepo{
+    + List<Command> findAll()
+    + List<Command> findActive()
+    + int add (Command cmd)
+    + int delete (Command cmd)
+    + int update (Command cmd)
+}
+
+class Command {
+  + long userId
+  + long id
+  + long deviceId
+  + long portId
+  + int value
+  + int priority
+  + CommandStatus status
+  + Instant registeredAt
+  + Instant plannedRunAt
+  + Instant finishedAt
+  + String createdBy
+}
+
+class CommandIntent {
+  + long userId
+  + long deviceId
+  + long portId
+  + int value
+  + int priority
+  + Instant createdAt
+  + String createdBy
+}
+
+enum CommandStatus {
+  + SEND,
+  + RECEIVED,
+  + OK,
+  + FAILED
+}
+
+CommandRegisterImpl ..|> CommandRegister : implements
+CommandAssignImpl ..|> CommandAssign : implements
+CommandRegisterImpl ..> CommandIntent : uses
+CommandRegisterImpl ..> Command : uses
+CommandAssign ..> Command : uses
+CommandAssignImpl ..> Command : uses
+CommandRegisterImpl ..> SubscriptionChecker : constructor\n injection
+CommandRegisterImpl ..> CommandRepo : constructor\n injection
+CommandAssignImpl ..> CommandRepo : constructor\n injection
+
+CommandRepo ..> Command : uses
+SubscriptionChecker ..> CommandIntent : uses
+CommandRegisterImpl ..> CommandIntent : uses
+
+Command --> CommandStatus : has
+
+@enduml
