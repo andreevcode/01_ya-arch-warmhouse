@@ -109,7 +109,7 @@ _Добавьте сюда диаграмму контекста в модели
 # Задание 4. Создание и документирование API
 Описание основных эндпойнтов и подписок для некоторых микросервисов:
 - Async API `telematic-mqtt-service` для взаимодействия с устройствами по MQTT : [acync-api.yaml](apps/telematic-mqtt-service/acync-api.yaml)
-- Open API `device-inventory`  для менеджмента устройств [device-inventory_openapi.yaml](apps/device-inventory/device-inventory_openapi.yaml)
+- Open API `device-inventory` для менеджмента устройств [device-inventory_openapi.yaml](apps/device-inventory/device-inventory_openapi.yaml)
 - Open API `command-manager` для управления [command-manager_openapi.yaml](apps/command-manager/command-manager_openapi.yaml)[device-inventory_openapi.yaml](apps/device-inventory/device-inventory_openapi.yaml)
 
 # Задание 5. Работа с docker и docker-compose
@@ -125,9 +125,21 @@ _Добавьте сюда диаграмму контекста в модели
   - `DELETE /api/v1/devices/{deviceId}` - удаляется устройство и все его `device_channels`.
   - liquibase скрипты по таблицам `sensor`, `device_channel` и `device` - также реализованы в этом сервисе.
   - для ручного создания устройств можно воспользоваться [device-inventory_api.postman_collection.json](apps/device-inventory/device-inventory_api.postman_collection.json)
-2. Для возможности вырезать из монолита ответственность по организации опроса датчиков сделано:
-- Добавлен контейнер с очередью `RabbitMQ` для имитации поставки данных от сенсоров по MQTT. 
-- В [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.publishTemperatures` имитирующий поставку рандомных значений температуры в очередь раз в секунду.
-- В [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.updateSensors` , который раз в 10 секунд обновляет актуальный список сенсоров из нового сервиса `device-invertory` - для передачи показаний температуры по актуальным устройствам.
-- Добавлен новый сервис [telematic-mqtt-service](apps/telematic-mqtt-service), в котором реализован [MqttMetricsHandler](apps/telematic-mqtt-service/src/main/java/org/example/telematic_mqtt_service/mqtt/MqttMetricsHandler.java), разбирающий очередь и обновляющих значения в новой таблице `device_channel`, но с меньшей частотой, чем приходят показания в очередь.
-3. Для отрыва ответственности "передачи данных телеметрии на клиентские устройства" в монолит добавлен endpoint `GET /api/v2/sensors` , который получает актуальные данные об устройствах и их показаниях температуры.
+2. Для возможности вырезать из монолита ответственности "опрос датчиков" 
+- на стороне новых сервисов сделано:
+  - добавлен контейнер с очередью `RabbitMQ` для имитации поставки данных от сенсоров по MQTT;
+  - в [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.publishTemperatures` имитирующий поставку рандомных значений температуры в очередь раз в секунду;
+  - в [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.updateSensors` , который раз в 10 секунд обновляет актуальный список сенсоров из нового сервиса `device-invertory` - для передачи показаний температуры по актуальным устройствам;
+  - добавлен новый сервис [telematic-mqtt-service](apps/telematic-mqtt-service), в котором реализован [MqttMetricsHandler](apps/telematic-mqtt-service/src/main/java/org/example/telematic_mqtt_service/mqtt/MqttMetricsHandler.java), разбирающий очередь и обновляющих значения в новой таблице `device_channel`, но с меньшей частотой, чем приходят показания в очередь;
+- в монолите предлагается:
+  - не использовать endpoint `GET /api/v1/sensors` для получения показаний температуры на клиенте - из-за того, что под капотом опрос датчиков;
+  - вместо этого использовать новый endpoint `GET /api/v2/sensors`, который получает актуальные данные об устройствах и показаниях температуры уже из таблицы `device-channel`, которая является кроме всего прочего является асинхронным хранилищем текущих значений температуры;
+
+**Что делать дальше для реализации всех требований к новому функционалу?**
+- предполагается, что после введения в строй новых `telematic-session-service` и `command-mamager` клиенты будут получать телеметрию и отправлять команды через них, и старый монолит можно выключить.
+- далее доделывать и включать новый функционал и оставшиеся микросервисы: 
+  - другие типы устройств;
+  - сценарии;
+  - видеонаблюдение;
+  - и т.п.;
+
