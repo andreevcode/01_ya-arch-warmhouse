@@ -1,0 +1,67 @@
+{
+	"info": {
+		"_postman_id": "b178b4e6-4e9e-486e-b354-210f6e4ca99a",
+		"name": "Device - Inventory API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "15610920"
+	},
+	"item": [
+		{
+			"name": "Add Device 1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"kitchen temperature\",\n    \"type\": \"temperature\",\n    \"location\": \"kitchen\",\n    \"unit\": \"°C\"\n}"
+				},
+				"url": "http://localhost:8083/api/v1/devices",
+				"description": "Create a new device"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Device 2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": 2,\n    \"name\": \"device 2\",\n    \"type\": \"sensor\",\n    \"name\": \"Temperature sensor bedroom\",\n    \"location\": \"bedroom\"\n}"
+				},
+				"url": "http://localhost:8083/api/v1/devices",
+				"description": "Create a new device"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Device 3",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"kitchen temperature\",\n    \"type\": \"temperature\",\n    \"location\": \"kitchen\",\n    \"unit\": \"°C\"\n}"
+				},
+				"url": "http://localhost:8083/api/v1/devices",
+				"description": "Create a new device"
+			},
+			"response": []
+		}
+	]
+}
