@@ -107,6 +107,10 @@ _Добавьте сюда диаграмму контекста в модели
 ![ER_Diagram.svg](schemas/to_be/ER_Diagram.svg)
 
 # Задание 4. Создание и документирование API
+Описание основных эндпойнтов и подписок для некоторых микросервисов:
+- Async API `telematic-mqtt-service` для взаимодействия с устройствами по MQTT : [acync-api.yaml](apps/telematic-mqtt-service/acync-api.yaml)
+- Open API `device-inventory`  для менеджмента устройств [device-inventory_openapi.yaml](apps/device-inventory/device-inventory_openapi.yaml)
+- Open API `command-manager` для управления [command-manager_openapi.yaml](apps/command-manager/command-manager_openapi.yaml)[device-inventory_openapi.yaml](apps/device-inventory/device-inventory_openapi.yaml)
 
 # Задание 5. Работа с docker и docker-compose
 Реализован микросервис  `temperature-api`, который имитирует отдачу показаний датчиками температуры при опросе из монолита. Выдает рандомные значения температуры.
