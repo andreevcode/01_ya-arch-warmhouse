@@ -44,15 +44,10 @@ func main() {
 
 	// API routes
 	apiRoutes := router.Group("/api/v1")
-	apiRoutesV2 := router.Group("/api/v2")
 
 	// Register sensor routes
 	sensorHandler := handlers.NewSensorHandler(database, temperatureService)
 	sensorHandler.RegisterRoutes(apiRoutes)
-
-	// v2
-	sensorHandlerV2 := handlers.NewSensorHandlerV2(database)
-	sensorHandlerV2.RegisterRoutes(apiRoutesV2)
 
 	// Start server
 	srv := &http.Server{

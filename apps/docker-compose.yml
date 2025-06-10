@@ -2,71 +2,12 @@ version: '3.8'
 
 services:
   postgres:
-    build:
-      context: ./smart_home
-      dockerfile: Dockerfile-postgres
+    image: postgres:16-alpine
     container_name: smarthome-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: smarthome
-    ports:
-      - "7432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - smarthome-network
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
-      interval: 2s
-      timeout: 5s
-      retries: 3
+  ## тут нужно добавить настройки
 
   temperature-api:
-    build:
-      context: ./temperature-api
-      dockerfile: Dockerfile
-#      dockerfile: Dockerfile-local
-    ports:
-        - "8081:8081"
-    restart: unless-stopped
-    depends_on:
-      - rabbitmq
-    networks:
-        - smarthome-network
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - smarthome-network
-
-  telematic-mqtt-service:
-      build:
-        context: ./telematic-mqtt-service
-        dockerfile: Dockerfile
-#        dockerfile: Dockerfile-local
-      ports:
-        - "8082:8082"
-      restart: unless-stopped
-      depends_on:
-        - rabbitmq
-      networks:
-        - smarthome-network
-
-  device-inventory:
-      build:
-        context: ./device-inventory
-        dockerfile: Dockerfile
-      ports:
-        - "8083:8083"
-      restart: unless-stopped
-      depends_on:
-        - rabbitmq
-      networks:
-        - smarthome-network
+  ## тут нужно добавить приложение
 
   app:
     build:
@@ -79,7 +20,7 @@ services:
       temperature-api:
         condition: service_started
     environment:
-      - DATABASE_URL=postgres://postgres:password@postgres:5432/smarthome
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/smarthome
       - TEMPERATURE_API_URL=http://temperature-api:8081
     ports:
       - "8080:8080"
