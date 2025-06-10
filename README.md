@@ -115,7 +115,7 @@ _Добавьте сюда диаграмму контекста в модели
 # Задание 5. Работа с docker и docker-compose
 Реализован микросервис  `temperature-api`, который имитирует отдачу показаний датчиками температуры при опросе из монолита. Выдает рандомные значения температуры.
 Проверить можно, добавив несколько датчиков через `POST /api/v1/sensors`, а затем опросив через `GET /api/v1/sensors` несколько раз, убедившись, что значения температуры меняются.
-- тут можно использовать обновленную [smarthome-api.postman_collection.json](apps/smarthome-api.postman_collection.json)
+- для проверки можно использовать обновленную коллекцию [smarthome-api.postman_collection.json](apps/smart_home/smarthome-api.postman_collection.json)
 
 # **Задание 6. Разработка MVP**
 **Что реализовано для демонстрации вариантов распила монолита:**
@@ -124,9 +124,10 @@ _Добавьте сюда диаграмму контекста в модели
   - `GET /api/v1/devices` - возвращает устройство со списком всех device_channels.
   - `DELETE /api/v1/devices/{deviceId}` - удаляется устройство и все его `device_channels`.
   - liquibase скрипты по таблицам `sensor`, `device_channel` и `device` - также реализованы в этом сервисе.
+  - для ручного создания устройств можно воспользоваться [device-inventory_api.postman_collection.json](apps/device-inventory/device-inventory_api.postman_collection.json)
 2. Для возможности вырезать из монолита ответственность по организации опроса датчиков сделано:
 - Добавлен контейнер с очередью `RabbitMQ` для имитации поставки данных от сенсоров по MQTT. 
 - В [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.publishTemperatures` имитирующий поставку рандомных значений температуры в очередь раз в секунду.
-- В [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.updateSensors` , который раз в 10 секунд обновляет актуальный список сенсоров для передачи показаний температуры из нового сервиса `device-invertory`.
+- В [temperature-api](apps/temperature-api) добавлен шедулер `TemperatureScheduler.updateSensors` , который раз в 10 секунд обновляет актуальный список сенсоров из нового сервиса `device-invertory` - для передачи показаний температуры по актуальным устройствам.
 - Добавлен новый сервис [telematic-mqtt-service](apps/telematic-mqtt-service), в котором реализован [MqttMetricsHandler](apps/telematic-mqtt-service/src/main/java/org/example/telematic_mqtt_service/mqtt/MqttMetricsHandler.java), разбирающий очередь и обновляющих значения в новой таблице `device_channel`, но с меньшей частотой, чем приходят показания в очередь.
 3. Для отрыва ответственности "передачи данных телеметрии на клиентские устройства" в монолит добавлен endpoint `GET /api/v2/sensors` , который получает актуальные данные об устройствах и их показаниях температуры.
