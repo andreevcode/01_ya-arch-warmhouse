@@ -79,6 +79,57 @@ func (db *DB) GetSensors(ctx context.Context) ([]models.Sensor, error) {
 	return sensors, nil
 }
 
+// GetSensors retrieves all sensors from the database
+func (db *DB) GetSensorsV2(ctx context.Context) ([]models.Sensor, error) {
+	query := `
+		SELECT
+                d.id,
+                d.name,
+                d.type,
+                d.location,
+                c.value,
+                'C' as unit,
+                'active' as status,
+                c.value_updated_at as last_updated,
+                c.created_at
+            FROM device d
+            LEFT JOIN device_channel c ON d.id = c.device_id
+            ORDER BY d.id
+	`
+
+	rows, err := db.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying sensors: %w", err)
+	}
+	defer rows.Close()
+
+	var sensors []models.Sensor
+	for rows.Next() {
+		var s models.Sensor
+		err := rows.Scan(
+			&s.ID,
+			&s.Name,
+			&s.Type,
+			&s.Location,
+			&s.Value,
+			&s.Unit,
+			&s.Status,
+			&s.LastUpdated,
+			&s.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning sensor row: %w", err)
+		}
+		sensors = append(sensors, s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating sensor rows: %w", err)
+	}
+
+	return sensors, nil
+}
+
 // GetSensorByID retrieves a sensor by its ID
 func (db *DB) GetSensorByID(ctx context.Context, id int) (models.Sensor, error) {
 	query := `

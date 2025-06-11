@@ -1,0 +1,102 @@
+@startuml
+title SmartHome API & Services.Part 1. Component Diagram
+
+top to bottom direction
+
+!includeurl ../C4_Component.puml
+
+System_Boundary(SmartHomeSystem, "SmartHome System") {
+
+Container(API_Gateway, "API Gateway", "nginx", "")
+
+Boundary(services, "API & services") {
+   System_Ext(bank, "Bank System", "External bank for processing payments")
+   System_Ext(relays, "Relays", "реле управления:\n- отопление\n- ворота\n- выключатели освещения\n - и др.")
+
+   ContainerDb(MetaDB, "Meta Database", "PostgreSQL", "хранит пользователей, устройства, сценарии, платежи и др.\n(кроме телеметрии)")
+   ContainerDb(UserCache, "User Cache", "Redis", "юзер-кэш метрик, устройств\n и др.данных")
+
+    together {
+        Container(UserService, "User Service", "Java, Spring", "управление пользователями\nи ролями") {
+            Component(ApiController2, "APIController","Java, Spring", "Обработка API запросов")
+            Component(ServiceLayer2, "Service Layer", "Java, Spring", "Business logic")
+            Component(RepositoryLayer2, "Repository Layer", "Java, Spring", "Data access logic")
+
+            Rel(ApiController2, ServiceLayer2,"запросы на просмотр и сохранение")
+            Rel(ServiceLayer2, RepositoryLayer2,"CRUD операции")
+            Rel(RepositoryLayer2, MetaDB,"read/writes\ndata")
+        }
+        Container(SubscriptionsAndPayments, "Subscriptions and Payments", "Java, Spring", "подписки и платежи"){
+             Component(ApiController6, "APIController","Java, Spring", "Обработка API запросов")
+             Component(ServiceLayer6, "Service Layer", "Java, Spring", "Business logic")
+             Component(RepositoryLayer6, "Repository Layer", "Java, Spring", "Data access logic")
+
+             Rel(ApiController6, ServiceLayer6,"запросы по подпискам и оплате")
+             Rel(ServiceLayer6, RepositoryLayer6,"CRUD операции")
+             Rel(RepositoryLayer6, MetaDB,"read/writes\ndata")
+             Rel(ServiceLayer6, bank,"payments")
+        }
+
+        Container(AuthService, "Auth service", "Java, Spring", "авторизация и аутентификация"){
+             Component(ApiController5, "APIController","Java, Spring", "Обработка API запросов")
+             Component(ServiceLayer5, "Service Layer", "Java, Spring", "Business logic")
+             Component(RepositoryLayer5, "Repository Layer", "Java, Spring", "Data access logic")
+
+             Rel(ApiController5, ServiceLayer5,"авторизация\nи аутентификация")
+             Rel(ServiceLayer5, RepositoryLayer5,"CRUD операции")
+             Rel(RepositoryLayer5, MetaDB,"read/writes\ndata")
+             Rel(ServiceLayer5, ServiceLayer6," ")
+        }
+
+        Container(DeviceInventory, "Device Inventory", "Java, Spring", "менеджмент датчиков и реле"){
+            Component(ApiController3, "APIController", "Java, Spring",  "Обработка API запросов")
+            Component(ServiceLayer3, "Service Layer", "Java, Spring", "Business logic")
+            Component(RepositoryLayer3, "Repository Layer", "Java, Spring", "Data access logic")
+
+            Rel(ApiController3, ServiceLayer3,"вызывает бизнес-логику")
+            Rel(ServiceLayer3, RepositoryLayer3,"CRUD операции")
+            Rel(RepositoryLayer3, MetaDB,"read/writes\ndata")
+            Rel(RepositoryLayer3, UserCache,"renew data")
+
+            Rel(ServiceLayer3, ApiController5,"проверка подписки")
+        }
+    }
+
+    together{
+        Container(CommandsManager, "CommandsManager", "Java, Spring", "Регистрация/отправка команд"){
+            Component(CommandsRegister, "Commands Register", "Java, Spring", "регистрация команд")
+            Component(CommandsAssignment, "Commands Assignment", "Java, Spring", "разметка и приоритезация")
+            Component(CommandsSender, "Commands Sender", "Java, Spring", "отправка команд")
+
+        }
+
+        Rel(CommandsRegister, CommandsAssignment,"разметка и приоритезация")
+        Rel(CommandsRegister, "ApiController5","проверка подписки")
+
+        Rel(CommandsRegister, MetaDB,"регистрация команд")
+        Rel(MetaDB, CommandsSender,"разбор очереди")
+        Rel(CommandsSender, relays,"отправка\n команд")
+    }
+
+    Container(ScenarioService, "Scenarios Service", "Java, Spring", "обработка сценариев") {
+        Component(ApiController, "APIController", "Java, Spring", "Обработка API запросов")
+        Component(ServiceLayer, "Service Layer", "Java, Spring", "Business logic")
+        Component(RepositoryLayer, "Repository Layer", "Java, Spring", "Data access logic")
+
+        Rel(ApiController, ServiceLayer,"вызывает бизнес-логику")
+        Rel(ServiceLayer, RepositoryLayer,"CRUD операции")
+        Rel(RepositoryLayer, MetaDB,"read/writes\ndata")
+        Rel(ServiceLayer, CommandsRegister,"инициализация команд")
+        Rel(RepositoryLayer, UserCache,"renew data")
+    }
+
+    'от API Gateway
+    Rel(API_Gateway, ApiController,"scenario\n requests")
+    Rel(API_Gateway, ApiController2,"команды\n пользователя")
+    Rel(API_Gateway, "ApiController3","добавление/удаление\n устройств")
+
+    Rel(API_Gateway, CommandsRegister,"команды\nпользователя")
+}
+
+
+@enduml

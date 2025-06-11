@@ -1,0 +1,122 @@
+openapi: "3.0.4"
+info:
+  title: "device-inventory API"
+  description: "command-manager API"
+  version: "1.0.0"
+servers:
+  - url: "https://command-manager/"
+
+paths:
+  /api/v1/commands/:
+    post:
+      description: "Sending new command_intent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref : '#/components/schemas/CommandIntent'
+      responses:
+        '200':
+          description: New command intent was successfully created
+        '400':
+          $ref : '#/components/responses/400Error'
+    get:
+      description: "Get active commands"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref : '#/components/schemas/CommandIntent'
+      responses:
+        '200':
+          description: New command intent was successfully created
+        '400':
+          $ref: '#/components/responses/400Error'
+  /api/v1/commands/{deviceId}:
+    get:
+      description: "Get active commands with statuses for device"
+      parameters:
+        - name: "deviceId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/CommandWithStatus"
+        '400':
+          $ref: '#/components/responses/400Error'
+components:
+  schemas:
+    CommandIntent:
+      type: object
+      properties:
+        user_id:
+          type: number
+          format: uuid
+          nullable: false
+        device_id:
+          type: number
+          format: int64
+          nullable: false
+        device_channel_id:
+          type: number
+          format: int64
+          nullable: false
+        value:
+          type: number
+          format: float
+          nullable: false
+        plan_to_run_at:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+          nullable: false
+    CommandWithStatus:
+      type: object
+      properties:
+        id:
+          type: number
+          format: int64
+        user_id:
+          type: number
+          format: uuid
+        command_intent_id:
+          type: number
+          format: int64
+        device_id:
+          type: number
+          format: int64
+        device_channel_id:
+          type: number
+          format: int64
+        value:
+          type: number
+          format: float
+        send_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+  responses:
+    400Error:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
