@@ -1,0 +1,101 @@
+asyncapi: '2.6.0'
+info:
+  title: Telematic MQTT Service
+  version: '1.0.0'
+  description: Telematic-mqtt-service gets metrics and commands back via MQTT from/to user devices
+
+servers:
+  production:
+    url: mqtt://mqtt-broker.com:1883
+    protocol: mqtt
+
+channels:
+  users/{userId}/devices/{deviceId}/metrics:
+    description: Topic for getting metrics (double) from user devices.
+    parameters:
+      userId:
+        description: Идентификатор пользователя.
+        schema:
+          type: string
+      deviceId:
+        description: Идентификатор устройства.
+        schema:
+          type: string
+    subscribe:
+      summary: Получение метрик от устройств.
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          required:
+            - metricName
+            - value
+            - timestamp
+          properties:
+            metricName:
+              type: string
+              description: Название метрики (например, temperature и т.п.).
+            value:
+              type: number
+              format: double
+              description: Значение метрики.
+            timestamp:
+              type: string
+              format: date-time
+              description: Временная метка измерения.
+
+  users/{userId}/devices/{deviceId}/commands:
+    description: Топик для отправки команд на устройство.
+    parameters:
+      userId:
+        description: Идентификатор пользователя.
+        schema:
+          type: string
+      deviceId:
+        description: Идентификатор устройства.
+        schema:
+          type: string
+    publish:
+      summary: Отправка команды на устройство.
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          required:
+            - commandName
+            - parameters
+          properties:
+            commandName:
+              type: string
+              description: Название команды.
+            parameters:
+              type: object
+              description: Параметры команды, могут быть любыми, зависит от команды.
+
+components:
+  schemas:
+    Metric:
+      type: object
+      required:
+        - metricName
+        - value
+        - timestamp
+      properties:
+        metricName:
+          type: string
+        value:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+    Command:
+      type: object
+      required:
+        - commandName
+        - parameters
+      properties:
+        commandName:
+          type: string
+        parameters:
+          type: object

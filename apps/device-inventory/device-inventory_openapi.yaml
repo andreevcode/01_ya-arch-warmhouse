@@ -1,0 +1,169 @@
+openapi: "3.0.4"
+info:
+  title: "device-inventory API"
+  description: "device-inventory API"
+  version: "1.0.0"
+servers:
+  - url: "https://device-inventory/"
+paths:
+  /api/v1/devices:
+    post:
+      description: "Add new device (now with default temperature channel)"
+      summary: "POST api/v1/devices"
+      operationId: "addDevice"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  type: "integer"
+                  format: "int64"
+    get:
+      description: "Get all devices for user"
+      summary: "GET api/v1/devices"
+      operationId: "getDevices"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/DeviceWithChannels"
+  /api/v1/devices/{deviceId}:
+    get:
+      description: "Get certain user device"
+      summary: "GET api/v1/devices/{deviceId}"
+      operationId: "getDevice"
+      parameters:
+        - name: "deviceId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/DeviceWithChannels"
+    delete:
+      summary: "DELETE api/v1/devices/{deviceId}"
+      operationId: "deleteDevice"
+      parameters:
+        - name: "deviceId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  type: "integer"
+                  format: "int64"
+components:
+  schemas:
+    Instant:
+      type: "object"
+      properties: { }
+    Device:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        user_id:
+          type: "number"
+          format: "uuid"
+          nullable: false
+        name:
+          type: "string"
+          nullable: false
+        type:
+          type: "string"
+          nullable: false
+        location:
+          type: "string"
+          nullable: false
+        ip:
+          type: "string"
+          nullable: true
+        createdAt:
+          nullable: true
+          $ref: "#/components/schemas/Instant"
+    DeviceChannel:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        deviceId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        channelIndex:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        type:
+          type: "string"
+          nullable: true
+        createdAt:
+          nullable: true
+          $ref: "#/components/schemas/Instant"
+        value:
+          type: "number"
+          format: "float"
+          nullable: true
+        valueUpdatedAt:
+          nullable: true
+          $ref: "#/components/schemas/Instant"
+    DeviceWithChannels:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        name:
+          type: "string"
+          nullable: true
+        type:
+          type: "string"
+          nullable: true
+        location:
+          type: "string"
+          nullable: true
+        ip:
+          type: "string"
+          nullable: true
+        createdAt:
+          nullable: true
+          $ref: "#/components/schemas/Instant"
+        channels:
+          type: "array"
+          nullable: true
+          items:
+            $ref: "#/components/schemas/DeviceChannel"

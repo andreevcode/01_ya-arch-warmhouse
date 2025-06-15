@@ -1,0 +1,197 @@
+@startuml
+title SmartHome MetaDb Er Diagram
+skinparam linetype ortho
+
+' ENUMS
+enum device_group {
+  SENSOR
+  RELAY
+}
+
+enum area {
+  TEMP
+  DOOR
+  LIGHT
+}
+
+enum io_type {
+  BI
+  AI
+  BO
+  AO
+}
+
+' ENTITIES
+
+' CORE
+entity user {
+  * id : uuid
+  --
+  + name : text
+  + email : text
+  + password : text
+  + created_at : timestamptz
+}
+
+entity device {
+  * id : bigserial
+  --
+  + location : text
+  + ip : inet
+  + created_at : timestamptz
+  + last_updated_at : timestamptz
+  --
+  + user_id : uuid <<FK>>
+  + device_type_id : bigint <<FK>>
+}
+
+entity device_type {
+  * id : bigserial
+  --
+  + name : text
+  + description : text
+  + group : device_group
+  + area : area
+  + config : jsonb
+  --
+  + protocol : bigint <<FK>>
+}
+
+entity protocol {
+  * id : bigserial
+  --
+  + name : text
+  + description : text
+  + config : jsonb
+}
+
+entity channel_type {
+  * id : uuid
+  --
+  + io_type : io_type
+  + unit : text
+  + name : text
+  + config : jsonb
+  + created_at : timestamptz
+  + last_updated_at : timestamptz
+  --
+  UNIQUE(type, index, unit, name, config)
+}
+
+entity device_channel {
+  * id : bigserial
+  --
+  + index : int
+  + name : text
+  + value : double
+  + config : jsonb
+  + created_at : timestamptz
+  + last_updated_at : timestamptz
+  + value_updated_at : timestamptz
+  --
+  + channel_type_id : bigint <<FK>>
+  + device_id : bigint <<FK>>
+  UNIQUE(type, index)
+}
+
+'SCENARIOS
+entity scenario {
+  * id : bigserial
+  --
+  + name : text
+  + enabled : boolean
+  + created_at : timestampz
+  --
+  + user_id : uuid <<FK>>
+}
+
+entity scenario_rule {
+  * id : bigserial
+  --
+  + rule_order : int
+  + condition_operator : text -- and / or
+  --
+  + scenario_id : bigint <<FK>>
+}
+
+entity rule_condition {
+  * id : bigserial
+  --
+  + comparison : text
+  + value : text
+  --
+  + scenario_rule_id : bigint <<FK>>
+}
+
+entity rule_action {
+  * id : bigserial
+  --
+  + command_intent : jsonb
+  + target_device_id : bigint
+  + target_device_channel_id : bigint
+  + parameters : jsonb
+  --
+  + scenario_rule_id : bigint <<FK>>
+}
+
+
+'COMMANDS
+enum command_status {
+  SEND
+  RECEIVED
+  OK
+  FAILED
+}
+
+entity command {
+  * id : bigint
+  --
+  + command_intent_id : bigint
+  + device_id : bigint
+  + device_channel_id : bigint
+  + value : double
+  + priority : int
+  + status : command_status
+  + registered_at : timestampz
+  + planned_run_at : timestampz
+  + finished_at : timestampz
+  + created_by : text
+  --
+  + user_id : uuid <<FK>>
+}
+
+entity command_intent {
+  * id : bigint
+  --
+  + device_id : bigint
+  + device_channel_id : bigint
+  + value : double
+  + priority : int
+  + created_at : timestampz
+  + to_run_at : timestampz
+  + created_by : text
+  --
+  + user_id : uuid <<FK>>
+}
+
+
+' RELATIONSHIPS
+device ||--o{ command : executes on device
+device_channel ||--o{ command : executes on device channel
+device ||--o{ command_intent : plans
+command ||--|| command_intent : intents
+rule_action ||--|| command_intent : should be transferred to
+
+' RELATIONSHIPS
+user ||--o{ scenario : owns
+scenario ||--o{ scenario_rule : contains
+scenario_rule ||--o{ rule_condition : has
+scenario_rule ||--o{ rule_action : triggers
+
+rule_condition }o--|| device_channel : reads
+device ||--o{ device_channel : has
+device_type ||--o{ device : typed
+protocol ||--|| device_type : uses
+channel_type ||--o{ device_channel : types
+
+@enduml@startuml
